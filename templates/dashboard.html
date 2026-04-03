@@ -24,6 +24,11 @@
             border: 1px solid rgba(255,255,255,0.05);
             position: relative;
         }
+        .frosted-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(8px); }
+        .frosted-btn:hover { background: rgba(56,189,248,0.16); border-color: rgba(37,99,235,0.4); }
+        .awesome-glow{
+            box-shadow: 0 0 20px rgba(56,189,248,0.4), 0 0 40px rgba(59,130,246,0.2);
+        }
         /* Active State (Selected) */
         .subject-chip.active { 
             background: rgba(8, 145, 178, 0.2); 
@@ -80,6 +85,41 @@
         </div>
     </div>
 
+    <div class="relative z-10 grid md:grid-cols-2 gap-4">
+        <div class="bg-[#0f172a]/80 rounded-3xl border border-white/10 p-5 backdrop-blur-xl shadow-[0_10px_50px_rgba(0,0,0,0.4)]">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-3">Student Pulse</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="p-4 rounded-2xl bg-[#020b16]/80 border border-cyan-500/20 hover:shadow-[0_10px_30px_rgba(37,99,235,0.3)] transition-all duration-300">
+                    <p class="text-[10px] text-slate-400 uppercase">Current Streak</p>
+                    <p id="streak-count" class="text-2xl font-black text-cyan-400">0</p>
+                </div>
+                <div class="p-4 rounded-2xl bg-[#020b16]/80 border border-blue-500/20 hover:shadow-[0_10px_30px_rgba(59,130,246,0.3)] transition-all duration-300">
+                    <p class="text-[10px] text-slate-400 uppercase">Engagement</p>
+                    <p id="engagement-score" class="text-2xl font-black text-blue-400">0%</p>
+                </div>
+                <div class="p-4 rounded-2xl bg-[#020b16]/80 border border-purple-500/20 hover:shadow-[0_10px_30px_rgba(147,51,234,0.3)] transition-all duration-300">
+                    <p class="text-[10px] text-slate-400 uppercase">Goal Reach</p>
+                    <p id="goal-score" class="text-2xl font-black text-purple-400">0%</p>
+                </div>
+                <div class="p-4 rounded-2xl bg-[#020b16]/80 border border-emerald-500/20 hover:shadow-[0_10px_30px_rgba(16,185,129,0.3)] transition-all duration-300">
+                    <p class="text-[10px] text-slate-400 uppercase">Rank</p>
+                    <p id="rank-badge" class="text-2xl font-black text-emerald-400">Bronze</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="motivational-card" class="bg-gradient-to-r from-blue-500/20 via-cyan-500/15 to-indigo-500/20 border border-blue-500/20 rounded-3xl p-6 backdrop-blur-xl shadow-[0_10px_40px_rgba(37,99,235,0.25)]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-white">Daily Motivation</h3>
+                <span class="text-xs text-gray-300">Boost mode</span>
+            </div>
+            <p id="motivation-text" class="text-[13px] text-slate-100 leading-relaxed">Focus and progress are your superpowers. Complete one more milestone to unleash a special reward!</p>
+            <div class="mt-4">
+                <button onclick="triggerConfetti()" class="frosted-btn w-full py-2 rounded-xl font-bold text-white">Power Up</button>
+            </div>
+        </div>
+    </div>
+
     <div class="relative z-10 grid lg:grid-cols-3 gap-6">
 
         <div class="space-y-6">
@@ -102,15 +142,23 @@
                     <div id="active-subjects-summary" class="flex flex-wrap gap-1 text-[10px] text-slate-400 italic">
                         No subjects in profile.
                     </div>
+                    <!-- Fun progress bar -->
+                    <div class="mt-3">
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div id="progress-bar" class="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <p class="text-[8px] text-slate-500 mt-1">Profile Completion</p>
+                    </div>
                 </div>
             </div>
 
             <div class="bg-[#0f172a]/80 backdrop-blur-xl p-6 rounded-3xl border border-white/5 flex flex-col h-[300px]">
-                <h2 class="text-lg font-bold text-white mb-4">📝 Personal Logs</h2>
-                <div id="notes-display" class="flex-1 space-y-2 overflow-y-auto pr-2 custom-scrollbar mb-4"></div>
-                <div class="flex gap-2">
-                    <input id="note-input" type="text" placeholder="New entry..." class="flex-1 p-3 rounded-xl bg-[#030712] border border-white/10 text-xs outline-none text-white">
-                    <button onclick="addNote()" class="bg-cyan-600 text-white px-4 rounded-xl text-xs font-bold">Log</button>
+                <h2 class="text-lg font-bold text-white mb-4">🏆 Achievements</h2>
+                <div id="achievements" class="flex-1 space-y-2 overflow-y-auto pr-2 custom-scrollbar">
+                    <div class="bg-cyan-500/10 p-3 rounded-xl text-[11px] border border-cyan-500/20">
+                        <span class="text-cyan-400 font-bold">🎓 First Login</span> - Welcome to RSP Core!
+                    </div>
+                    <!-- More achievements will be added dynamically -->
                 </div>
             </div>
         </div>
@@ -198,7 +246,11 @@
         });
 
         function updateCounter() {
-            document.getElementById('subject-count').innerText = `${selectedSubjects.length}/50`;
+            const count = selectedSubjects.length;
+            document.getElementById('subject-count').innerText = `${count}/50`;
+            // Update progress bar
+            const progress = Math.min((count / 10) * 100, 100); // Assume 10 subjects for 100%
+            document.getElementById('progress-bar').style.width = `${progress}%`;
         }
 
         // 2. SAVE CONFIG
@@ -230,6 +282,9 @@
                         if (el) el.classList.add('active');
                     });
                     document.getElementById('active-subjects-summary').innerText = data.subjects.join(', ');
+                    
+                    // Update achievements
+                    updateAchievements(data.subjects.length, data.notes ? data.notes.length : 0);
                 }
 
                 // Render Logs
@@ -283,6 +338,80 @@
         function deleteNote(n) {
             userDocRef.update({ notes: firebase.firestore.FieldValue.arrayRemove(n) });
         }
+        
+        function updateAchievements(subjectCount, noteCount) {
+            const achievementsDiv = document.getElementById('achievements');
+            let achievements = [
+                { icon: '🎓', title: 'First Login', desc: 'Welcome to RSP Core!', unlocked: true },
+            ];
+            
+            if (subjectCount >= 3) {
+                achievements.push({ icon: '📚', title: 'Subject Master', desc: 'Added 3+ subjects!', unlocked: true });
+            }
+            if (noteCount >= 5) {
+                achievements.push({ icon: '✍️', title: 'Note Taker', desc: 'Logged 5+ notes!', unlocked: true });
+            }
+            if (subjectCount >= 10) {
+                achievements.push({ icon: '🏆', title: 'Academic Champion', desc: '10+ subjects selected!', unlocked: true });
+            }
+            
+            achievementsDiv.innerHTML = achievements.map(a => `
+                <div class="bg-${a.unlocked ? 'cyan' : 'gray'}-500/10 p-3 rounded-xl text-[11px] border border-${a.unlocked ? 'cyan' : 'gray'}-500/20">
+                    <span class="text-${a.unlocked ? 'cyan' : 'gray'}-400 font-bold">${a.icon} ${a.title}</span> - ${a.desc}
+                </div>
+            `).join('');
+
+            updateStudentPulse(subjectCount, noteCount);
+        }
+
+        function updateStudentPulse(subjectCount, noteCount) {
+            const streak = Math.min(subjectCount * 2, 30);
+            const engagement = Math.min(20 + noteCount * 5, 100);
+            const goal = Math.round((subjectCount / 10) * 100);
+            const rank = subjectCount >= 10 ? 'Diamond' : subjectCount >= 6 ? 'Gold' : subjectCount >= 3 ? 'Silver' : 'Bronze';
+
+            document.getElementById('streak-count').innerText = `${streak}d`;
+            document.getElementById('engagement-score').innerText = `${engagement}%`;
+            document.getElementById('goal-score').innerText = `${goal}%`;
+            document.getElementById('rank-badge').innerText = rank;
+
+            const sayings = [
+                'Focus mode on — you’re a study machine! ✨',
+                'Keep the momentum — your goals are falling fast! 🚀',
+                'Power through the next subject and shine! 💎'
+            ];
+            document.getElementById('motivation-text').innerText = sayings[Math.floor(Math.random() * sayings.length)];
+            if (goal >= 80) {
+                document.getElementById('motivational-card').classList.add('awesome-glow');
+            } else {
+                document.getElementById('motivational-card').classList.remove('awesome-glow');
+            }
+        }
+
+        function triggerConfetti() {
+            const container = document.getElementById('motivational-card');
+            for (let i = 0; i < 30; i++) {
+                const dot = document.createElement('span');
+                dot.textContent = '🎉';
+                dot.style.position = 'absolute';
+                dot.style.left = `${Math.random() * 100}%`;
+                dot.style.top = `${Math.random() * 100}%`;
+                dot.style.fontSize = `${Math.random() * 16 + 10}px`;
+                dot.style.opacity = '0.8';
+                dot.style.transform = `translate(-50%, -50%) rotate(${Math.random() * 360}deg)`;
+                dot.className = 'popup-confetti';
+                container.appendChild(dot);
+                setTimeout(() => dot.remove(), 900);
+            }
+        }
+
+        const style = document.createElement('style');
+        style.textContent = `
+            .popup-confetti { transition: transform 0.9s ease-out, opacity 0.9s ease-out; }
+            .popup-confetti { transform: translateY(-80px); opacity: 0; }
+        `;
+        document.head.appendChild(style);
+
     </script>
 </body>
 </html>
