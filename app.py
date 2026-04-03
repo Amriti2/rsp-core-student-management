@@ -111,7 +111,7 @@ def signup():
         return redirect(url_for("login"))
     return render_template("signup.html")
 
-PRINCIPALS = ["admin", "principal1", "principal2", "amran_principal"]  # Add principal usernames here
+PRINCIPALS = ["admin", "principal1", "amran2", "amran_principal"]  # Add principal usernames here
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -245,13 +245,12 @@ def principal_chat(student_id):
     flash("📡 Transmission Sent", "success")
     return redirect(url_for("principal_dashboard"))
 
-@app.route("/principal_notify", methods=["POST"])
-def principal_notify():
-    msg = request.form.get("notification")
-    if msg:
-        p_ref = db.collection("principal").document("principal_notifications")
-        p_ref.set({"notifications": firestore.ArrayUnion([msg])}, merge=True)
-    return redirect(url_for("principal_dashboard"))
+@app.route("/calendar")
+def calendar():
+    # Check if user is logged in (simplified, in real app use sessions)
+    # For now, assume principal if username in PRINCIPALS
+    # But since no session, we'll handle in JS
+    return render_template("calendar.html")
 
 if __name__ == "__main__":
     app.run(debug=True)
