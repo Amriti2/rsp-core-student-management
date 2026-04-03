@@ -8,8 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.jpg') }}">
     
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         body { font-family: 'Outfit', sans-serif; background-color: #030712; }
@@ -164,6 +163,13 @@
         </div>
 
         <div class="bg-[#0f172a]/80 backdrop-blur-xl p-6 rounded-3xl border border-white/5 flex flex-col">
+            <h2 class="text-lg font-bold text-white mb-4">📊 Progress Radar</h2>
+            <div class="flex-1">
+                <canvas id="progressChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-[#0f172a]/80 backdrop-blur-xl p-6 rounded-3xl border border-white/5 flex flex-col">
             <h2 class="text-lg font-bold text-white mb-1">⚙ Academic Matrix</h2>
             <p class="text-[10px] text-slate-500 mb-6 uppercase tracking-widest italic">Click to Add / Click Blue to Remove</p>
             
@@ -190,6 +196,19 @@
             <div class="flex gap-2">
                 <input id="chat-input-field" type="text" placeholder="Message Principal..." onkeypress="if(event.key === 'Enter') sendMessage()" class="flex-1 p-3 rounded-xl bg-[#030712] border border-white/10 text-sm outline-none text-white">
                 <button onclick="sendMessage()" class="bg-purple-600 px-6 rounded-xl font-bold">Send</button>
+            </div>
+        </div>
+
+        <div class="bg-[#0f172a]/80 backdrop-blur-xl p-6 rounded-3xl border border-white/5 flex flex-col">
+            <h2 class="text-lg font-bold text-white mb-4">⏱️ Study Timer</h2>
+            <div class="flex-1 flex flex-col justify-center items-center">
+                <div id="timer-display" class="text-6xl font-black text-cyan-400 mb-6">25:00</div>
+                <div class="flex gap-3">
+                    <button id="start-timer" onclick="startTimer()" class="frosted-btn px-6 py-3 rounded-xl font-bold text-white">Start</button>
+                    <button id="pause-timer" onclick="pauseTimer()" class="frosted-btn px-6 py-3 rounded-xl font-bold text-white" disabled>Pause</button>
+                    <button onclick="resetTimer()" class="frosted-btn px-6 py-3 rounded-xl font-bold text-white">Reset</button>
+                </div>
+                <p class="text-xs text-slate-400 mt-4">Pomodoro technique: 25 min work, 5 min break</p>
             </div>
         </div>
     </div>
@@ -362,6 +381,53 @@
             `).join('');
 
             updateStudentPulse(subjectCount, noteCount);
+            updateProgressChart(subjectCount, noteCount);
+        }
+
+        function updateProgressChart(subjectCount, noteCount) {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            const data = {
+                labels: ['Subjects', 'Notes', 'Engagement', 'Goals'],
+                datasets: [{
+                    label: 'Progress',
+                    data: [subjectCount * 10, noteCount * 5, Math.min(subjectCount * 8 + noteCount * 2, 100), Math.min(subjectCount * 10, 100)],
+                    backgroundColor: [
+                        'rgba(56, 189, 248, 0.6)',
+                        'rgba(59, 130, 246, 0.6)',
+                        'rgba(147, 51, 234, 0.6)',
+                        'rgba(16, 185, 129, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(56, 189, 248, 1)',
+                        'rgba(59, 130, 246, 1)',
+                        'rgba(147, 51, 234, 1)',
+                        'rgba(16, 185, 129, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            };
+            const config = {
+                type: 'radar',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { display: false },
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            angleLines: { color: 'rgba(255,255,255,0.1)' },
+                            pointLabels: { color: 'rgba(255,255,255,0.8)', font: { size: 10 } }
+                        }
+                    }
+                }
+            };
+            new Chart(ctx, config);
         }
 
         function updateStudentPulse(subjectCount, noteCount) {
@@ -403,6 +469,54 @@
                 container.appendChild(dot);
                 setTimeout(() => dot.remove(), 900);
             }
+        }
+
+        // Study Timer
+        let timerInterval;
+        let timeLeft = 25 * 60; // 25 minutes in seconds
+        let isRunning = false;
+
+        function startTimer() {
+            if (!isRunning) {
+                isRunning = true;
+                document.getElementById('start-timer').disabled = true;
+                document.getElementById('pause-timer').disabled = false;
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateTimerDisplay();
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        alert('Time\'s up! Take a break.');
+                        timeLeft = 5 * 60; // 5 minute break
+                        updateTimerDisplay();
+                        isRunning = false;
+                        document.getElementById('start-timer').disabled = false;
+                        document.getElementById('pause-timer').disabled = true;
+                    }
+                }, 1000);
+            }
+        }
+
+        function pauseTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            document.getElementById('start-timer').disabled = false;
+            document.getElementById('pause-timer').disabled = true;
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 25 * 60;
+            updateTimerDisplay();
+            isRunning = false;
+            document.getElementById('start-timer').disabled = false;
+            document.getElementById('pause-timer').disabled = true;
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timer-display').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
 
         const style = document.createElement('style');
