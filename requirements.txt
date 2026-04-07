@@ -1,0 +1,7 @@
+flask==3.0.3
+firebase-admin==6.5.0
+pywebview==5.1
+pyngrok==7.1.2
+flask-login==0.6.3
+Werkzeug==3.0.3
+gunicorn==23.0.0

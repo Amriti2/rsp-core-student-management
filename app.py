@@ -1,256 +1,362 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+import os
+import sys
+import json
+
 import firebase_admin
 from firebase_admin import credentials, firestore
+from flask import Flask, flash, jsonify, redirect, render_template, request, url_for
+from werkzeug.security import check_password_hash, generate_password_hash
 
-# ------------------------
-# APP SETUP
-# ------------------------
+
 app = Flask(__name__)
-app.secret_key = "supersecretkey"
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "rsp_core_secure_system_key")
 
-# ------------------------
-# FIREBASE SETUP
-# ------------------------
-# Ensure this JSON file is in your project folder!
-# Fallbacks are included for local testing when Firestore is unavailable.
-import os
+PRINCIPALS = ["admin", "principal_mark", "school_head", "amran2", "principal2"]
 
-# This gets the exact folder where app.py is sitting
-base_dir = os.path.dirname(os.path.abspath(__file__))
-service_account_candidates = [
-    os.path.join(base_dir, "rsp-system-firebase-adminsdk-fbsvc-01b0c7d460.json"),
-    os.path.join(base_dir, "rsp-system-firebase-adminsdk-fbsvc-baa3f96b0c.json"),
-    os.path.join(base_dir, "serviceAccountKey.json")
-]
 
-service_account_key = None
-for p in service_account_candidates:
-    if os.path.exists(p):
-        service_account_key = p
-        break
+def initialize_firestore():
+    if getattr(sys, "frozen", False):
+        base_dir = sys._MEIPASS
+    else:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+    json_path = os.path.join(base_dir, "rsp-system-firebase-adminsdk-fbsvc-ab197f8feb.json")
+    env_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON", "").strip()
+    env_json_path = os.environ.get("FIREBASE_SERVICE_ACCOUNT_PATH", "").strip()
 
-firebase_initialized = False
-in_memory_db = {"users": {}, "principal_notifications": {"notifications": []}}
-db = None
-
-if service_account_key:
     try:
         if not firebase_admin._apps:
-            cred = credentials.Certificate(service_account_key)
+            if env_json:
+                cred = credentials.Certificate(json.loads(env_json))
+            elif env_json_path:
+                cred = credentials.Certificate(env_json_path)
+            else:
+                cred = credentials.Certificate(json_path)
             firebase_admin.initialize_app(cred)
-        db = firestore.client()
-        firebase_initialized = True
-        print("✅ Firebase initialized with", service_account_key)
-    except Exception as e:
-        print("⚠️ Firebase init failed:", e)
-        firebase_initialized = False
-else:
-    print("⚠️ No service account config file found. Running in local fallback mode.")
+        client = firestore.client()
+        print("Firebase Connected Successfully!")
+        return client
+    except Exception as error:
+        print(f"Firebase Error: {error}")
+        return None
 
 
-def _ensure_db_connected():
-    if not firebase_initialized:
-        raise RuntimeError("Firebase not initialized")
+db = initialize_firestore()
+
+
+def db_ready():
+    return db is not None
+
+
+def is_principal_username(username):
+    return username in PRINCIPALS
+
+
+def is_principal_user(user_data):
+    username = (user_data or {}).get("username", "")
+    return is_principal_username(username)
+
+
+def parse_subjects(raw_subjects):
+    if not raw_subjects:
+        return []
+    return [subject.strip() for subject in raw_subjects.split(",") if subject.strip()]
 
 
 def get_user_document(user_id):
-    if firebase_initialized:
-        return db.collection("users").document(user_id)
-    return in_memory_db["users"].get(user_id, None)
+    if not db_ready():
+        return None
+    document = db.collection("users").document(user_id).get()
+    if not document.exists:
+        return None
+    return document
 
-
-def set_user_document(user_id, data):
-    if firebase_initialized:
-        db.collection("users").document(user_id).set(data, merge=True)
-    else:
-        in_memory_db["users"][user_id] = data
-
-
-def add_user(data):
-    if firebase_initialized:
-        return db.collection("users").add(data)
-    user_id = str(len(in_memory_db["users"]) + 1)
-    in_memory_db["users"][user_id] = {**data, "id": user_id}
-    return (None, user_id)
-
-# ------------------------
-# CONSTANTS
-# ------------------------
-PRINCIPALS = ["amran_principal", "principal2"]
-
-# ------------------------
-# ROUTES
-# ------------------------
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
+
+@app.route("/test_firestore")
+def test_firestore():
+    if not db_ready():
+        return jsonify({"success": False, "error": "Firestore is not connected."}), 500
+
+    try:
+        test_doc = db.collection("test").document("connection_test")
+        test_doc.set({"status": "connected", "timestamp": firestore.SERVER_TIMESTAMP}, merge=True)
+        data = test_doc.get().to_dict() or {}
+        return jsonify({"success": True, "data": data}), 200
+    except Exception as error:
+        print(f"Firestore Test Error: {error}")
+        return jsonify({"success": False, "error": str(error)}), 500
+
+
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
-        if not firebase_initialized:
-            flash("⚠️ Database is not connected. Signup is disabled until Firebase is configured.", "error")
-            return redirect(url_for("signup"))
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
+        confirm = request.form.get("confirm", "").strip()
 
-        username = request.form["username"]
-        password = request.form["password"]
+        if not db_ready():
+            flash("Database connection failed. Check your Firebase file and Firestore setup.", "danger")
+            return render_template("signup.html")
 
-        # Initialize with empty structures
-        db.collection("users").add({
-            "username": username,
-            "password": password,
-            "name": "",
-            "subjects": [],
-            "level": "",
-            "notifications": [],
-            "notes": [] 
-        })
+        if not username or not password:
+            flash("Please fill in all fields.", "danger")
+            return render_template("signup.html")
 
-        flash("✅ Account created successfully!", "success")
-        return redirect(url_for("login"))
+        if confirm and password != confirm:
+            flash("Passwords do not match.", "danger")
+            return render_template("signup.html")
+
+        try:
+            existing = db.collection("users").where("username", "==", username).limit(1).get()
+            if existing:
+                flash("Username already exists.", "danger")
+                return render_template("signup.html")
+
+            created_ref = db.collection("users").document()
+            created_ref.set(
+                {
+                    "username": username,
+                    "password": generate_password_hash(password),
+                    "name": "",
+                    "subjects": [],
+                    "level": "",
+                    "notes": [],
+                    "community_service": [],
+                    "community_hours": 0,
+                }
+            )
+            flash("Account created successfully. Please log in.", "success")
+            return redirect(url_for("login"))
+        except Exception as error:
+            print(f"Signup Error: {error}")
+            flash("Could not create account right now.", "danger")
+
     return render_template("signup.html")
 
-PRINCIPALS = ["admin", "principal1", "amran2", "amran_principal"]  # Add principal usernames here
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        if not firebase_initialized:
-            flash("⚠️ Database is not connected. Login is disabled until Firebase is configured.", "error")
-            return redirect(url_for("login"))
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
 
-        username = request.form["username"]
-        password = request.form["password"]
+        if not db_ready():
+            flash("Database connection failed. Check your Firebase file and Firestore setup.", "danger")
+            return render_template("login.html")
 
-        users = db.collection("users").where("username", "==", username).where("password", "==", password).stream()
-        
-        user_found = None
-        for u in users:
-            user_found = u
-            break
+        if not username or not password:
+            flash("Please fill in all fields.", "danger")
+            return render_template("login.html")
 
-        if user_found:
-            if username in PRINCIPALS:
-                return redirect(url_for("principal_dashboard"))
-            else:
-                return redirect(url_for("dashboard", user_id=user_found.id))
-        
-        flash("❌ Wrong username or password.", "error")
+        try:
+            result = db.collection("users").where("username", "==", username).limit(1).get()
+            if not result:
+                flash("Invalid username or password.", "danger")
+                return render_template("login.html")
+
+            user_doc = result[0]
+            user_data = user_doc.to_dict() or {}
+            stored_password = user_data.get("password", "")
+
+            if stored_password and check_password_hash(stored_password, password):
+                flash("Login successful.", "success")
+                if is_principal_user(user_data):
+                    return redirect(url_for("principal_dashboard", user_id=user_doc.id))
+                return redirect(url_for("dashboard", user_id=user_doc.id))
+
+            flash("Invalid username or password.", "danger")
+        except Exception as error:
+            print(f"Login Error: {error}")
+            flash("Could not log in right now.", "danger")
+
     return render_template("login.html")
+
 
 @app.route("/dashboard/<user_id>")
 def dashboard(user_id):
-    user_ref = db.collection("users").document(user_id)
-    user_doc = user_ref.get()
-
-    if not user_doc.exists:
-        flash("User not found.", "error")
+    if not db_ready():
+        flash("Database connection failed. Check your Firebase file and Firestore setup.", "danger")
         return redirect(url_for("login"))
 
-    user_data = user_doc.to_dict()
-    user_data.setdefault("subjects", [])
-    user_data.setdefault("notifications", [])
-    user_data.setdefault("notes", [])
+    try:
+        user_doc = get_user_document(user_id)
+        if user_doc is None:
+            flash("User not found.", "danger")
+            return redirect(url_for("login"))
 
-    return render_template("dashboard.html", user=user_data, user_id=user_id)
+        user_data = user_doc.to_dict() or {}
+        if is_principal_user(user_data):
+            return redirect(url_for("principal_dashboard", user_id=user_id))
+        user_data.setdefault("username", "")
+        user_data.setdefault("name", "")
+        user_data.setdefault("subjects", [])
+        user_data.setdefault("level", "")
+        user_data.setdefault("notes", [])
+        return render_template("dashboard.html", user=user_data, user_id=user_id)
+    except Exception as error:
+        print(f"Dashboard Error: {error}")
+        flash("Could not load the dashboard.", "danger")
+        return redirect(url_for("login"))
+
+
+@app.route("/principal-dashboard/<user_id>")
+def principal_dashboard(user_id):
+    if not db_ready():
+        flash("Database connection failed. Check your Firebase file and Firestore setup.", "danger")
+        return redirect(url_for("login"))
+
+    try:
+        principal_doc = get_user_document(user_id)
+        if principal_doc is None:
+            flash("Principal account not found.", "danger")
+            return redirect(url_for("login"))
+
+        principal_data = principal_doc.to_dict() or {}
+        if not is_principal_user(principal_data):
+            flash("Access denied.", "danger")
+            return redirect(url_for("login"))
+
+        student_documents = db.collection("users").stream()
+        students = []
+        for document in student_documents:
+            student = document.to_dict() or {}
+            if is_principal_user(student):
+                continue
+            student["id"] = document.id
+            students.append(student)
+
+        students.sort(key=lambda student: (student.get("name") or student.get("username") or "").lower())
+        return render_template(
+            "principal_dashboard.html",
+            students=students,
+            principal_id=user_id,
+        )
+    except Exception as error:
+        print(f"Principal Dashboard Error: {error}")
+        flash("Could not load the principal dashboard.", "danger")
+        return redirect(url_for("login"))
+
 
 @app.route("/update/<user_id>", methods=["POST"])
 def update(user_id):
-    name = request.form.get("name")
-    email = request.form.get("email")
-    level = request.form.get("level")
-    subjects_raw = request.form.get("subjects", "")
-    subjects = [s.strip() for s in subjects_raw.split(",")] if subjects_raw else []
+    if not db_ready():
+        return ("Database unavailable", 500)
 
-    db.collection("users").document(user_id).update({
-        "name": name,
-        "email": email,
-        "level": level,
-        "subjects": subjects
-    })
+    try:
+        user_doc = get_user_document(user_id)
+        if user_doc is None:
+            return ("User not found", 404)
 
-    flash("✅ Profile Updated!", "success")
-    return redirect(url_for("dashboard", user_id=user_id))
+        updates = {}
+        if "name" in request.form:
+            updates["name"] = request.form.get("name", "").strip()
+        if "level" in request.form:
+            updates["level"] = request.form.get("level", "").strip()
+        if "subjects" in request.form:
+            updates["subjects"] = parse_subjects(request.form.get("subjects", ""))
 
-# ------------------------
-# PRINCIPAL COMMANDS
-# ------------------------
+        if updates:
+            db.collection("users").document(user_id).update(updates)
 
-@app.route("/principal")
-def principal_dashboard():
-    query = request.args.get("search", "").lower()
-    students_ref = db.collection("users").stream()
-    all_students = []
+        return redirect(url_for("dashboard", user_id=user_id))
+    except Exception as error:
+        print(f"Update Error: {error}")
+        return ("Update failed", 500)
 
-    for s in students_ref:
-        data = s.to_dict()
-        data["id"] = s.id
-        # Search Filter
-        if not query or query in data.get("name", "").lower() or query in data.get("username", "").lower():
-            all_students.append(data)
 
-    all_students.sort(key=lambda x: x.get("name") or x.get("username"))
+@app.route("/api/notes/<user_id>", methods=["GET", "POST"])
+def api_notes(user_id):
+    if not db_ready():
+        return jsonify({"error": "Database unavailable"}), 500
 
-    # Load Global Notifications
-    p_ref = db.collection("principal").document("principal_notifications")
-    p_doc = p_ref.get()
-    p_notes = p_doc.to_dict().get("notifications", []) if p_doc.exists else []
+    try:
+        user_doc = get_user_document(user_id)
+        if user_doc is None:
+            return jsonify({"error": "User not found"}), 404
 
-    return render_template("principal_dashboard.html", students=all_students, notifications=p_notes, search=query)
+        user_data = user_doc.to_dict() or {}
+        notes = list(user_data.get("notes", []))
 
-@app.route("/add_student", methods=["POST"])
-def add_student():
-    db.collection("users").add({
-        "name": request.form.get("name"),
-        "username": request.form.get("username"),
-        "email": request.form.get("email", ""),
-        "level": request.form.get("level", ""),
-        "subjects": [],
-        "notifications": [],
-        "notes": []
-    })
-    return redirect(url_for("principal_dashboard"))
+        if request.method == "POST":
+            payload = request.get_json(silent=True) or {}
+            note = (payload.get("note") or "").strip()
+            if not note:
+                return jsonify({"error": "Note content is required."}), 400
 
-@app.route("/delete_student/<student_id>", methods=["POST"])
-def delete_student(student_id):
-    db.collection("users").document(student_id).delete()
-    return redirect(url_for("principal_dashboard"))
+            notes.append(note)
+            db.collection("users").document(user_id).update({"notes": notes})
+            return jsonify({"status": "ok", "notes": notes})
 
-# --- MESSAGE SYSTEM (The part you needed!) ---
+        return jsonify({"notes": notes})
+    except Exception as error:
+        print(f"Notes API Error: {error}")
+        return jsonify({"error": "Could not load notes"}), 500
 
-@app.route("/notify/<student_id>", methods=["POST"])
-def send_notification(student_id):
-    msg = request.form.get("notification")
-    if msg:
-        user_ref = db.collection("users").document(student_id)
-        user_ref.update({
-            "notifications": firestore.ArrayUnion([msg])
-        })
-    return redirect(url_for("principal_dashboard"))
 
-@app.route("/chat/<student_id>", methods=["POST"])
-def principal_chat(student_id):
-    """Sends a message into the student's sub-collection for real-time chat"""
-    msg_text = request.form.get("chat_message")
-    if not msg_text:
-        return redirect(url_for("principal_dashboard"))
+@app.route("/api/chat/<user_id>", methods=["GET", "POST", "DELETE"])
+def api_chat(user_id):
+    if not db_ready():
+        return jsonify({"error": "Database unavailable"}), 500
 
-    # We add to the 'chat' sub-collection inside the student's document
-    # This matches the 'db.collection("users").doc(userId).collection("chat")' in your JS
-    db.collection("users").document(student_id).collection("chat").add({
-        "message": f"Principal: {msg_text}",
-        "timestamp": firestore.SERVER_TIMESTAMP
-    })
-    
-    flash("📡 Transmission Sent", "success")
-    return redirect(url_for("principal_dashboard"))
+    try:
+        user_doc = get_user_document(user_id)
+        if user_doc is None:
+            return jsonify({"error": "User not found"}), 404
 
-@app.route("/calendar")
-def calendar():
-    # Check if user is logged in (simplified, in real app use sessions)
-    # For now, assume principal if username in PRINCIPALS
-    # But since no session, we'll handle in JS
-    return render_template("calendar.html")
+        chat_ref = db.collection("users").document(user_id).collection("chat")
+
+        if request.method == "POST":
+            payload = request.get_json(silent=True) or {}
+            message = (payload.get("message") or "").strip()
+            if not message:
+                return jsonify({"error": "Message content is required."}), 400
+
+            chat_ref.add(
+                {
+                    "message": message,
+                    "sender": "student",
+                    "timestamp": firestore.SERVER_TIMESTAMP,
+                }
+            )
+            return jsonify({"status": "ok"})
+
+        if request.method == "DELETE":
+            payload = request.get_json(silent=True) or {}
+            message_id = (payload.get("id") or "").strip()
+            if not message_id:
+                return jsonify({"error": "Message ID is required."}), 400
+            chat_ref.document(message_id).delete()
+            return jsonify({"status": "ok"})
+
+        chat_messages = []
+        for document in chat_ref.order_by("timestamp").stream():
+            message = document.to_dict() or {}
+            message["id"] = document.id
+            chat_messages.append(message)
+        return jsonify({"chat": chat_messages})
+    except Exception as error:
+        print(f"Chat API Error: {error}")
+        return jsonify({"error": "Could not load chat"}), 500
+
+
+@app.route("/calendar/<user_id>")
+def calendar(user_id):
+    user_doc = get_user_document(user_id)
+    user_data = user_doc.to_dict() if user_doc else {}
+    is_principal = is_principal_username(user_id) or is_principal_user(user_data)
+    return render_template("calendar.html", user_id=user_id, is_principal=is_principal)
+
+
+@app.route("/community/<user_id>")
+def community(user_id):
+    user_doc = get_user_document(user_id)
+    user_data = user_doc.to_dict() if user_doc else {}
+    return render_template("community.html", user_id=user_id, is_principal=is_principal_user(user_data))
+
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", "5000")))

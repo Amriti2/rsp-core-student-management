@@ -76,7 +76,7 @@
         <h1 class="text-xl font-extrabold tracking-tight text-white">RSP <span class="text-blue-400">COMMAND</span></h1>
     </div>
     <div class="flex items-center gap-6 text-sm font-medium">
-        <a href="/calendar?principal=true" class="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-2 rounded-xl border border-cyan-500/50 transition-all font-bold">
+        <a href="/calendar/{{ principal_id }}?principal=true" class="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-2 rounded-xl border border-cyan-500/50 transition-all font-bold">
             📅 Calendar
         </a>
         <a href="/" class="bg-white/5 hover:bg-white/10 text-slate-300 px-5 py-2 rounded-xl border border-white/10 transition-all font-bold">
@@ -93,6 +93,11 @@
                 <span id="notif-count" class="bg-purple-600 text-[9px] px-2 py-0.5 rounded-full text-white font-bold">0</span>
             </div>
             <div id="notification-feed" class="space-y-3 min-h-[120px]"></div>
+        </section>
+
+        <section class="mb-4">
+            <h2 class="text-xs font-bold uppercase tracking-[0.2em] text-cyan-400 mb-3">Pending Service Approvals</h2>
+            <div id="pending-community" class="space-y-3 min-h-[120px] max-h-[160px] overflow-y-auto custom-scrollbar"></div>
         </section>
         <section class="bg-[#0b1225]/70 p-4 rounded-2xl border border-cyan-500/20">
             <h3 class="text-xs font-bold uppercase tracking-[0.2em] text-cyan-400 mb-3">Quick Insights</h3>
@@ -242,12 +247,28 @@
                     const d = doc.data();
                     const isP = d.sender === "principal";
                     const div = document.createElement('div');
-                    div.className = `flex ${isP ? 'justify-end' : 'justify-start'} mb-2`;
-                    div.innerHTML = `<div class="p-3 rounded-2xl text-[11px] ${isP ? 'bg-purple-600 text-white' : 'bg-white/10 text-slate-200'}">${d.message}</div>`;
+                    div.className = `flex ${isP ? 'justify-end' : 'justify-start'} items-center gap-2 mb-2`;
+
+                    const bubble = document.createElement('div');
+                    bubble.className = `p-3 rounded-2xl text-[11px] ${isP ? 'bg-purple-600 text-white' : 'bg-white/10 text-slate-200'}`;
+                    bubble.textContent = d.message;
+                    div.appendChild(bubble);
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'text-red-300 hover:text-red-100 text-[10px] px-1 py-0.5 rounded';
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.onclick = () => deleteStudentChatMessage(id, doc.id);
+                    div.appendChild(deleteBtn);
+
                     feed.appendChild(div);
                 });
                 feed.scrollTop = feed.scrollHeight;
             });
+
+        function deleteStudentChatMessage(studentId, messageId) {
+            if (!confirm('Delete this message from student chat?')) return;
+            db.collection('users').doc(studentId).collection('chat').doc(messageId).delete().catch(err => alert('Could not delete message: ' + err.message));
+        }
     }
 
     function issueDirective() {
@@ -323,14 +344,95 @@
         });
     }
 
+    function approveServiceEntry(studentId, entry) {
+        const studentRef = db.collection('users').doc(studentId);
+        const approvedEntry = { ...entry, status: 'approved' };
+
+        studentRef.update({
+            community_service: firebase.firestore.FieldValue.arrayRemove(entry)
+        }).then(() => {
+            return studentRef.update({
+                community_service: firebase.firestore.FieldValue.arrayUnion(approvedEntry),
+                community_hours: firebase.firestore.FieldValue.increment(entry.hours || 0)
+            });
+        }).then(() => {
+            loadPendingServiceRequests();
+        }).catch(err => alert('Approve failed: ' + err.message));
+    }
+
+    function rejectServiceEntry(studentId, entry) {
+        const studentRef = db.collection('users').doc(studentId);
+        if (!confirm('Reject this pending entry?')) return;
+        studentRef.update({
+            community_service: firebase.firestore.FieldValue.arrayRemove(entry)
+        }).then(() => loadPendingServiceRequests())
+        .catch(err => alert('Reject failed: ' + err.message));
+    }
+
+    function loadPendingServiceRequests() {
+        const pendingBlock = document.getElementById('pending-community');
+        pendingBlock.innerHTML = '<p class="text-xs text-slate-300">Loading pending service requests...</p>';
+
+        db.collection('users').get().then(snap => {
+            pendingBlock.innerHTML = '';
+            let pendingFound = false;
+
+            snap.forEach(doc => {
+                const userData = doc.data();
+                const studentName = userData.name || userData.username || 'Unknown';
+                const items = (userData.community_service || []).filter(i => i.status === 'pending');
+
+                items.forEach(entry => {
+                    pendingFound = true;
+                    const item = document.createElement('div');
+                    item.className = 'p-3 bg-blue-500/10 border border-blue-400/20 rounded-xl';
+
+                    const row = document.createElement('div');
+                    row.className = 'flex justify-between items-start gap-2';
+
+                    const info = document.createElement('div');
+                    info.className = 'text-xs text-blue-100';
+                    info.innerHTML = `<strong>${studentName}</strong> @ ${entry.location}<br>${entry.date} • ${entry.hours} hrs`;
+
+                    const controls = document.createElement('div');
+                    controls.className = 'flex gap-2';
+
+                    const approveBtn = document.createElement('button');
+                    approveBtn.className = 'text-emerald-300 hover:text-emerald-100 text-[10px]';
+                    approveBtn.textContent = 'Approve';
+                    approveBtn.onclick = () => approveServiceEntry(doc.id, entry);
+
+                    const rejectBtn = document.createElement('button');
+                    rejectBtn.className = 'text-rose-300 hover:text-rose-100 text-[10px]';
+                    rejectBtn.textContent = 'Reject';
+                    rejectBtn.onclick = () => rejectServiceEntry(doc.id, entry);
+
+                    controls.appendChild(approveBtn);
+                    controls.appendChild(rejectBtn);
+                    row.appendChild(info);
+                    row.appendChild(controls);
+                    item.appendChild(row);
+                    pendingBlock.appendChild(item);
+                });
+            });
+
+            if (!pendingFound) pendingBlock.innerHTML = '<p class="text-xs text-slate-300">No pending community service entries.</p>';
+        }).catch(err => {
+            pendingBlock.innerHTML = '<p class="text-xs text-red-300">Failed to load pending requests.</p>';
+            console.error(err);
+        });
+    }
+
     function refreshAnalytics() {
         const cards = document.querySelectorAll('.stat-card');
         cards.forEach(c => c.classList.add('flash-pulse'));
         setTimeout(() => cards.forEach(c => c.classList.remove('flash-pulse')), 700);
         syncNotifications();
+        loadPendingServiceRequests();
     }
 
     syncNotifications();
+    loadPendingServiceRequests();
 </script>
 </body>
 </html>

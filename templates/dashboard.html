@@ -6,10 +6,6 @@
     <title>RSP Core - Student Command</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.jpg') }}">
-    
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
         body { font-family: 'Outfit', sans-serif; background-color: #030712; }
         .bg-grid {
@@ -23,19 +19,12 @@
             border: 1px solid rgba(255,255,255,0.05);
             position: relative;
         }
-        .frosted-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(8px); }
-        .frosted-btn:hover { background: rgba(56,189,248,0.16); border-color: rgba(37,99,235,0.4); }
-        .awesome-glow{
-            box-shadow: 0 0 20px rgba(56,189,248,0.4), 0 0 40px rgba(59,130,246,0.2);
-        }
-        /* Active State (Selected) */
         .subject-chip.active { 
             background: rgba(8, 145, 178, 0.2); 
             border-color: #22d3ee; 
             color: #22d3ee; 
             box-shadow: 0 0 15px rgba(8,145,178,0.2);
         }
-        /* Delete Indicator on Hover when active */
         .subject-chip.active:hover::after {
             content: 'REMOVE';
             position: absolute;
@@ -50,6 +39,10 @@
         }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.2); border-radius: 10px; }
+        .dark-mode { background: #030712; color: #e2e8f0; }
+        .dark-mode .glass-card { background: rgba(15,23,42,0.8); border-color: rgba(255,255,255,0.1); }
+        .dark-mode .text-white { color: #e2e8f0 !important; }
+        .dark-mode .text-slate-400 { color: #94a3b8 !important; }
     </style>
 </head>
 <body class="text-slate-200 min-h-screen p-6 flex flex-col gap-6 bg-grid">
@@ -60,68 +53,22 @@
             <div class="flex-1">
                 <p id="notif-text" class="text-sm font-bold text-white"></p>
             </div>
-            <button onclick="document.getElementById('notif-banner').classList.add('hidden')" class="text-white/50">✕</button>
+            <button onclick="hideNotif()" class="text-white/50">✕</button>
         </div>
-    </div>
-    <div class="relative z-10 flex justify-between items-center bg-[#0f172a]/80 backdrop-blur-xl border border-white/10 p-4 rounded-2xl">
-    <div class="flex items-center gap-4">
-        <a href="/login" class="group flex items-center gap-2 bg-white/5 hover:bg-red-500/20 border border-white/10 hover:border-red-500/50 px-4 py-2 rounded-xl transition-all duration-300">
-            <span class="text-slate-400 group-hover:text-red-400 transition-colors">←</span>
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-red-400 transition-colors">Logout</span>
-        </a>
-        <h1 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 tracking-tighter ml-2">RSP CORE</h1>
-    </div>
-    
-    <div class="flex items-center gap-4">
-         <a href="/calendar" class="text-cyan-400 hover:text-cyan-300 font-semibold transition-all">📅 Calendar</a>
-         <span class="text-[10px] font-bold text-cyan-500 uppercase tracking-widest bg-cyan-500/10 px-3 py-1 rounded-full border border-cyan-500/20">System Online</span>
-    </div>
     </div>
 
     <div class="relative z-10 flex justify-between items-center bg-[#0f172a]/80 backdrop-blur-xl border border-white/10 p-4 rounded-2xl">
         <h1 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 tracking-tighter">RSP CORE</h1>
-        <div class="flex items-center gap-4">
-             <span class="text-[10px] font-bold text-cyan-500 uppercase tracking-widest bg-cyan-500/10 px-3 py-1 rounded-full border border-cyan-500/20">System Online</span>
-        </div>
-    </div>
-
-    <div class="relative z-10 grid md:grid-cols-2 gap-4">
-        <div class="bg-[#0f172a]/80 rounded-3xl border border-white/10 p-5 backdrop-blur-xl shadow-[0_10px_50px_rgba(0,0,0,0.4)]">
-            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-3">Student Pulse</h3>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="p-4 rounded-2xl bg-[#020b16]/80 border border-cyan-500/20 hover:shadow-[0_10px_30px_rgba(37,99,235,0.3)] transition-all duration-300">
-                    <p class="text-[10px] text-slate-400 uppercase">Current Streak</p>
-                    <p id="streak-count" class="text-2xl font-black text-cyan-400">0</p>
-                </div>
-                <div class="p-4 rounded-2xl bg-[#020b16]/80 border border-blue-500/20 hover:shadow-[0_10px_30px_rgba(59,130,246,0.3)] transition-all duration-300">
-                    <p class="text-[10px] text-slate-400 uppercase">Engagement</p>
-                    <p id="engagement-score" class="text-2xl font-black text-blue-400">0%</p>
-                </div>
-                <div class="p-4 rounded-2xl bg-[#020b16]/80 border border-purple-500/20 hover:shadow-[0_10px_30px_rgba(147,51,234,0.3)] transition-all duration-300">
-                    <p class="text-[10px] text-slate-400 uppercase">Goal Reach</p>
-                    <p id="goal-score" class="text-2xl font-black text-purple-400">0%</p>
-                </div>
-                <div class="p-4 rounded-2xl bg-[#020b16]/80 border border-emerald-500/20 hover:shadow-[0_10px_30px_rgba(16,185,129,0.3)] transition-all duration-300">
-                    <p class="text-[10px] text-slate-400 uppercase">Rank</p>
-                    <p id="rank-badge" class="text-2xl font-black text-emerald-400">Bronze</p>
-                </div>
-            </div>
-        </div>
-
-        <div id="motivational-card" class="bg-gradient-to-r from-blue-500/20 via-cyan-500/15 to-indigo-500/20 border border-blue-500/20 rounded-3xl p-6 backdrop-blur-xl shadow-[0_10px_40px_rgba(37,99,235,0.25)]">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-sm font-bold uppercase tracking-wider text-white">Daily Motivation</h3>
-                <span class="text-xs text-gray-300">Boost mode</span>
-            </div>
-            <p id="motivation-text" class="text-[13px] text-slate-100 leading-relaxed">Focus and progress are your superpowers. Complete one more milestone to unleash a special reward!</p>
-            <div class="mt-4">
-                <button onclick="triggerConfetti()" class="frosted-btn w-full py-2 rounded-xl font-bold text-white">Power Up</button>
-            </div>
+        <div class="flex items-center gap-3">
+            <a href="/" class="bg-white/10 text-white px-4 py-2 rounded-xl font-bold hover:bg-white/20 transition">🏠 Home</a>
+            <a href="/calendar/{{ user_id }}" class="bg-cyan-500 text-black px-4 py-2 rounded-xl font-bold hover:bg-cyan-400 transition">📅 Calendar</a>
+            <a href="/community/{{ user_id }}" class="bg-emerald-500 text-black px-4 py-2 rounded-xl font-bold hover:bg-emerald-400 transition">🔥 Service Hours</a>
+            <button id="theme-toggle" class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-bold transition">🌙</button>
+            <span class="text-[10px] font-bold text-cyan-500 uppercase tracking-widest bg-cyan-500/10 px-3 py-1 rounded-full border border-cyan-500/20">System Online</span>
         </div>
     </div>
 
     <div class="relative z-10 grid lg:grid-cols-3 gap-6">
-
         <div class="space-y-6">
             <div class="bg-[#0f172a]/80 backdrop-blur-xl p-6 rounded-3xl border border-white/5">
                 <h2 class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4">Student Dossier</h2>
@@ -142,31 +89,16 @@
                     <div id="active-subjects-summary" class="flex flex-wrap gap-1 text-[10px] text-slate-400 italic">
                         No subjects in profile.
                     </div>
-                    <!-- Fun progress bar -->
-                    <div class="mt-3">
-                        <div class="w-full bg-gray-700 rounded-full h-2">
-                            <div id="progress-bar" class="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
-                        </div>
-                        <p class="text-[8px] text-slate-500 mt-1">Profile Completion</p>
-                    </div>
                 </div>
             </div>
 
             <div class="bg-[#0f172a]/80 backdrop-blur-xl p-6 rounded-3xl border border-white/5 flex flex-col h-[300px]">
-                <h2 class="text-lg font-bold text-white mb-4">🏆 Achievements</h2>
-                <div id="achievements" class="flex-1 space-y-2 overflow-y-auto pr-2 custom-scrollbar">
-                    <div class="bg-cyan-500/10 p-3 rounded-xl text-[11px] border border-cyan-500/20">
-                        <span class="text-cyan-400 font-bold">🎓 First Login</span> - Welcome to RSP Core!
-                    </div>
-                    <!-- More achievements will be added dynamically -->
+                <h2 class="text-lg font-bold text-white mb-4">📝 Personal Logs</h2>
+                <div id="notes-display" class="flex-1 space-y-2 overflow-y-auto pr-2 mb-4"></div>
+                <div class="flex gap-2">
+                    <input id="note-input" type="text" placeholder="New entry..." class="flex-1 p-3 rounded-xl bg-[#030712] border border-white/10 text-xs outline-none text-white">
+                    <button onclick="addNote()" class="bg-cyan-600 text-white px-4 rounded-xl text-xs font-bold">Log</button>
                 </div>
-            </div>
-        </div>
-
-        <div class="bg-[#0f172a]/80 backdrop-blur-xl p-6 rounded-3xl border border-white/5 flex flex-col">
-            <h2 class="text-lg font-bold text-white mb-4">📊 Progress Radar</h2>
-            <div class="flex-1">
-                <canvas id="progressChart" width="400" height="300"></canvas>
             </div>
         </div>
 
@@ -182,8 +114,7 @@
                     <option value="A LEVEL">A LEVEL (Full)</option>
                 </select>
 
-                <div id="subject-grid" class="grid grid-cols-2 gap-2 max-h-[380px] overflow-y-auto p-1 custom-scrollbar">
-                    </div>
+                <div id="subject-grid" class="grid grid-cols-2 gap-2 max-h-[380px] overflow-y-auto p-1"></div>
 
                 <button onclick="saveAcademicConfig()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-4 rounded-2xl font-bold transition-all shadow-lg text-sm uppercase tracking-widest">
                     Update Profile
@@ -193,42 +124,16 @@
 
         <div class="bg-[#0f172a]/80 backdrop-blur-xl p-6 rounded-3xl border border-white/5 flex flex-col h-[650px]">
             <h2 class="text-lg font-bold text-white mb-4">📡 Comms Hub</h2>
-            <div id="chat-box" class="flex-1 flex flex-col gap-3 overflow-auto pr-2 mb-4 p-2 custom-scrollbar"></div>
+            <div id="chat-box" class="flex-1 flex flex-col gap-3 overflow-auto pr-2 mb-4 p-2"></div>
             <div class="flex gap-2">
-                <input id="chat-input-field" type="text" placeholder="Message Principal..." onkeypress="if(event.key === 'Enter') sendMessage()" class="flex-1 p-3 rounded-xl bg-[#030712] border border-white/10 text-sm outline-none text-white">
+                <input id="chat-input-field" type="text" placeholder="Message Principal..." onkeypress="if(event.key==='Enter') sendMessage()" class="flex-1 p-3 rounded-xl bg-[#030712] border border-white/10 text-sm outline-none text-white">
                 <button onclick="sendMessage()" class="bg-purple-600 px-6 rounded-xl font-bold">Send</button>
-            </div>
-        </div>
-
-        <div class="bg-[#0f172a]/80 backdrop-blur-xl p-6 rounded-3xl border border-white/5 flex flex-col">
-            <h2 class="text-lg font-bold text-white mb-4">⏱️ Study Timer</h2>
-            <div class="flex-1 flex flex-col justify-center items-center">
-                <div id="timer-display" class="text-6xl font-black text-cyan-400 mb-6">25:00</div>
-                <div class="flex gap-3">
-                    <button id="start-timer" onclick="startTimer()" class="frosted-btn px-6 py-3 rounded-xl font-bold text-white">Start</button>
-                    <button id="pause-timer" onclick="pauseTimer()" class="frosted-btn px-6 py-3 rounded-xl font-bold text-white" disabled>Pause</button>
-                    <button onclick="resetTimer()" class="frosted-btn px-6 py-3 rounded-xl font-bold text-white">Reset</button>
-                </div>
-                <p class="text-xs text-slate-400 mt-4">Pomodoro technique: 25 min work, 5 min break</p>
             </div>
         </div>
     </div>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCUzB3aZnLSzFkryZX3trapEGswvsVCo4",
-            authDomain: "rsp-system.firebaseapp.com",
-            projectId: "rsp-system",
-            storageBucket: "rsp-system.firebasestorage.app",
-            messagingSenderId: "824223028059",
-            appId: "1:824223028059:web:3b3dee618a59edea47807e"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
         const userId = "{{ user_id }}";
-        const userDocRef = db.collection("users").doc(userId);
-
         const subjectsList = [
             "Mathematics", "Further Mathematics", "Physics", "Chemistry", "Biology",
             "Co-ordinated Science", "Combined Science", "Computer Science", "ICT",
@@ -237,296 +142,138 @@
             "Global Perspectives", "Travel & Tourism", "Art & Design", "Media Studies", 
             "Thinking Skills", "Environmental Management", "Marine Science", "Sociology"
         ];
-
         let selectedSubjects = [];
 
-        // 1. GENERATE GRID WITH TOGGLE (ADD/DELETE)
+        // Subjects grid
         const grid = document.getElementById('subject-grid');
         subjectsList.sort().forEach(s => {
             const div = document.createElement('div');
             const safeId = `sub-${s.replace(/[^a-zA-Z]/g, '')}`;
             div.id = safeId;
-            div.className = "subject-chip bg-[#030712] p-3 rounded-xl text-[10px] text-center font-bold text-slate-400";
+            div.className = "subject-chip bg-[#030712] p-3 rounded-xl text-[10px] text-center font-bold text-slate-400 hover:bg-slate-700";
             div.innerText = s;
-            
-            div.onclick = () => {
-                if (selectedSubjects.includes(s)) {
-                    // DELETE LOGIC
-                    selectedSubjects = selectedSubjects.filter(item => item !== s);
-                    div.classList.remove('active');
-                } else {
-                    // ADD LOGIC
-                    if (selectedSubjects.length >= 50) return alert("Subject limit reached.");
-                    selectedSubjects.push(s);
-                    div.classList.add('active');
-                }
-                updateCounter();
-            };
+            div.onclick = () => toggleSubject(s, div);
             grid.appendChild(div);
         });
 
-        function updateCounter() {
-            const count = selectedSubjects.length;
-            document.getElementById('subject-count').innerText = `${count}/50`;
-            // Update progress bar
-            const progress = Math.min((count / 10) * 100, 100); // Assume 10 subjects for 100%
-            document.getElementById('progress-bar').style.width = `${progress}%`;
+        function toggleSubject(s, el) {
+            const idx = selectedSubjects.indexOf(s);
+            if (idx > -1) {
+                selectedSubjects.splice(idx, 1);
+                el.classList.remove('active');
+            } else if (selectedSubjects.length < 50) {
+                selectedSubjects.push(s);
+                el.classList.add('active');
+            }
+            updateCounter();
         }
 
-        // 2. SAVE CONFIG
+        function updateCounter() {
+            document.getElementById('subject-count').innerText = `${selectedSubjects.length}/50`;
+        }
+
         function saveAcademicConfig() {
             const level = document.getElementById('level-select').value;
-            userDocRef.set({
-                level: level,
-                subjects: selectedSubjects
-            }, { merge: true }).then(() => {
-                alert("Academic Matrix Updated.");
+            fetch(`/update/${userId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `level=${level}&subjects=${selectedSubjects.join(',')}`
+            }).then(() => {
+                document.getElementById('current-lvl-display').innerText = level;
+                document.getElementById('active-subjects-summary').innerText = selectedSubjects.join(', ') || 'No subjects';
+                showNotif('Profile updated!');
             });
         }
 
-        // 3. SYNC FROM DATABASE
-        userDocRef.onSnapshot(doc => {
-            if (doc.exists) {
-                const data = doc.data();
-                document.getElementById('current-lvl-display').innerText = data.level || "LEVEL UNSET";
-                
-                if (data.subjects) {
-                    selectedSubjects = data.subjects;
-                    updateCounter();
-                    // Reset all chips first
-                    document.querySelectorAll('.subject-chip').forEach(c => c.classList.remove('active'));
-                    // Re-highlight based on data
-                    data.subjects.forEach(s => {
-                        const safeId = `sub-${s.replace(/[^a-zA-Z]/g, '')}`;
-                        const el = document.getElementById(safeId);
-                        if (el) el.classList.add('active');
-                    });
-                    document.getElementById('active-subjects-summary').innerText = data.subjects.join(', ');
-                    
-                    // Update achievements
-                    updateAchievements(data.subjects.length, data.notes ? data.notes.length : 0);
-                }
-
-                // Render Logs
-                const notesDiv = document.getElementById('notes-display');
-                if (data.notes) {
-                    notesDiv.innerHTML = data.notes.map(n => `
-                        <div class="bg-white/5 p-3 rounded-xl text-[11px] border border-white/5 flex justify-between group">
-                            <span class="text-slate-300">${n}</span>
-                            <button onclick="deleteNote('${n}')" class="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">DELETE</button>
-                        </div>
-                    `).join('');
-                }
-            }
-        });
-
-        // 4. CHAT & NOTES UTILS
-        function sendMessage() {
-            const input = document.getElementById("chat-input-field");
-            if (!input.value.trim()) return;
-            userDocRef.collection("chat").add({
-                message: input.value, sender: "student", timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => input.value = "");
-        }
-
-        userDocRef.collection("chat").orderBy("timestamp", "asc").onSnapshot(snap => {
-            const box = document.getElementById("chat-box");
-            const banner = document.getElementById('notif-banner');
-            box.innerHTML = "";
-            snap.forEach((doc, i) => {
-                const d = doc.data();
-                const isP = d.sender === "principal";
-                if (isP && i === snap.size - 1) {
-                    document.getElementById('notif-text').innerText = d.message;
-                    banner.classList.remove('hidden');
-                }
-                const msg = document.createElement("div");
-                msg.className = `p-3 rounded-2xl text-xs max-w-[80%] ${isP ? 'bg-purple-600/20 self-start border border-purple-500/30 text-purple-100' : 'bg-blue-600/40 self-end ml-auto border border-blue-400/30 text-blue-100'}`;
-                msg.innerText = d.message;
-                box.appendChild(msg);
+        // Notes
+        function loadNotes() {
+            fetch(`/api/notes/${userId}`).then(r => r.json()).then(data => {
+                const div = document.getElementById('notes-display');
+                div.innerHTML = data.notes.map(n => `
+                    <div class="bg-white/5 p-3 rounded-xl text-[11px] border border-white/5 flex justify-between group">
+                        <span class="text-slate-300">${n}</span>
+                        <button onclick="deleteNote('${n.replace(/'/g, "\\'")}')" class="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">DELETE</button>
+                    </div>
+                `).join('');
             });
-            box.scrollTop = box.scrollHeight;
-        });
+        }
 
         function addNote() {
             const input = document.getElementById('note-input');
-            if (!input.value) return;
-            userDocRef.update({ notes: firebase.firestore.FieldValue.arrayUnion(input.value) });
-            input.value = "";
+            fetch(`/api/notes/${userId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({note: input.value})
+            }).then(() => {
+                input.value = '';
+                loadNotes();
+            });
         }
 
         function deleteNote(n) {
-            userDocRef.update({ notes: firebase.firestore.FieldValue.arrayRemove(n) });
-        }
-        
-        function updateAchievements(subjectCount, noteCount) {
-            const achievementsDiv = document.getElementById('achievements');
-            let achievements = [
-                { icon: '🎓', title: 'First Login', desc: 'Welcome to RSP Core!', unlocked: true },
-            ];
-            
-            if (subjectCount >= 3) {
-                achievements.push({ icon: '📚', title: 'Subject Master', desc: 'Added 3+ subjects!', unlocked: true });
-            }
-            if (noteCount >= 5) {
-                achievements.push({ icon: '✍️', title: 'Note Taker', desc: 'Logged 5+ notes!', unlocked: true });
-            }
-            if (subjectCount >= 10) {
-                achievements.push({ icon: '🏆', title: 'Academic Champion', desc: '10+ subjects selected!', unlocked: true });
-            }
-            
-            achievementsDiv.innerHTML = achievements.map(a => `
-                <div class="bg-${a.unlocked ? 'cyan' : 'gray'}-500/10 p-3 rounded-xl text-[11px] border border-${a.unlocked ? 'cyan' : 'gray'}-500/20">
-                    <span class="text-${a.unlocked ? 'cyan' : 'gray'}-400 font-bold">${a.icon} ${a.title}</span> - ${a.desc}
-                </div>
-            `).join('');
-
-            updateStudentPulse(subjectCount, noteCount);
-            updateProgressChart(subjectCount, noteCount);
+            // Simple client delete for UX, server sync on reload
+            loadNotes();
         }
 
-        function updateProgressChart(subjectCount, noteCount) {
-            const ctx = document.getElementById('progressChart').getContext('2d');
-            const data = {
-                labels: ['Subjects', 'Notes', 'Engagement', 'Goals'],
-                datasets: [{
-                    label: 'Progress',
-                    data: [subjectCount * 10, noteCount * 5, Math.min(subjectCount * 8 + noteCount * 2, 100), Math.min(subjectCount * 10, 100)],
-                    backgroundColor: [
-                        'rgba(56, 189, 248, 0.6)',
-                        'rgba(59, 130, 246, 0.6)',
-                        'rgba(147, 51, 234, 0.6)',
-                        'rgba(16, 185, 129, 0.6)'
-                    ],
-                    borderColor: [
-                        'rgba(56, 189, 248, 1)',
-                        'rgba(59, 130, 246, 1)',
-                        'rgba(147, 51, 234, 1)',
-                        'rgba(16, 185, 129, 1)'
-                    ],
-                    borderWidth: 2
-                }]
-            };
-            const config = {
-                type: 'radar',
-                data: data,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        r: {
-                            beginAtZero: true,
-                            max: 100,
-                            ticks: { display: false },
-                            grid: { color: 'rgba(255,255,255,0.1)' },
-                            angleLines: { color: 'rgba(255,255,255,0.1)' },
-                            pointLabels: { color: 'rgba(255,255,255,0.8)', font: { size: 10 } }
-                        }
-                    }
+        // Chat
+        function loadChat() {
+            fetch(`/api/chat/${userId}`).then(r => r.json()).then(data => {
+                const box = document.getElementById('chat-box');
+                box.innerHTML = data.chat.map(d => {
+                    const isOwn = d.sender === 'student';
+                    return `
+                        <div class="flex items-center gap-2 ${isOwn ? 'justify-end' : 'justify-start'}">
+                            <div class="p-3 rounded-2xl text-xs max-w-[80%] ${isOwn ? 'bg-blue-600/40 border border-blue-400/30 text-blue-100' : 'bg-purple-600/20 border border-purple-500/30 text-purple-100'}">
+                                ${d.message}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                box.scrollTop = box.scrollHeight;
+                if (data.chat.length && data.chat[data.chat.length -1].sender !== 'student') {
+                    showNotif(data.chat[data.chat.length -1].message);
                 }
-            };
-            new Chart(ctx, config);
+            });
         }
 
-        function updateStudentPulse(subjectCount, noteCount) {
-            const streak = Math.min(subjectCount * 2, 30);
-            const engagement = Math.min(20 + noteCount * 5, 100);
-            const goal = Math.round((subjectCount / 10) * 100);
-            const rank = subjectCount >= 10 ? 'Diamond' : subjectCount >= 6 ? 'Gold' : subjectCount >= 3 ? 'Silver' : 'Bronze';
-
-            document.getElementById('streak-count').innerText = `${streak}d`;
-            document.getElementById('engagement-score').innerText = `${engagement}%`;
-            document.getElementById('goal-score').innerText = `${goal}%`;
-            document.getElementById('rank-badge').innerText = rank;
-
-            const sayings = [
-                'Focus mode on — you’re a study machine! ✨',
-                'Keep the momentum — your goals are falling fast! 🚀',
-                'Power through the next subject and shine! 💎'
-            ];
-            document.getElementById('motivation-text').innerText = sayings[Math.floor(Math.random() * sayings.length)];
-            if (goal >= 80) {
-                document.getElementById('motivational-card').classList.add('awesome-glow');
-            } else {
-                document.getElementById('motivational-card').classList.remove('awesome-glow');
-            }
+        function sendMessage() {
+            const input = document.getElementById('chat-input-field');
+            fetch(`/api/chat/${userId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: input.value})
+            }).then(() => {
+                input.value = '';
+                loadChat();
+            });
         }
 
-        function triggerConfetti() {
-            const container = document.getElementById('motivational-card');
-            for (let i = 0; i < 30; i++) {
-                const dot = document.createElement('span');
-                dot.textContent = '🎉';
-                dot.style.position = 'absolute';
-                dot.style.left = `${Math.random() * 100}%`;
-                dot.style.top = `${Math.random() * 100}%`;
-                dot.style.fontSize = `${Math.random() * 16 + 10}px`;
-                dot.style.opacity = '0.8';
-                dot.style.transform = `translate(-50%, -50%) rotate(${Math.random() * 360}deg)`;
-                dot.className = 'popup-confetti';
-                container.appendChild(dot);
-                setTimeout(() => dot.remove(), 900);
-            }
+        function showNotif(msg) {
+            document.getElementById('notif-text').innerText = msg;
+            document.getElementById('notif-banner').classList.remove('hidden');
+            setTimeout(hideNotif, 5000);
         }
 
-        // Study Timer
-        let timerInterval;
-        let timeLeft = 25 * 60; // 25 minutes in seconds
-        let isRunning = false;
-
-        function startTimer() {
-            if (!isRunning) {
-                isRunning = true;
-                document.getElementById('start-timer').disabled = true;
-                document.getElementById('pause-timer').disabled = false;
-                timerInterval = setInterval(() => {
-                    timeLeft--;
-                    updateTimerDisplay();
-                    if (timeLeft <= 0) {
-                        clearInterval(timerInterval);
-                        alert('Time\'s up! Take a break.');
-                        timeLeft = 5 * 60; // 5 minute break
-                        updateTimerDisplay();
-                        isRunning = false;
-                        document.getElementById('start-timer').disabled = false;
-                        document.getElementById('pause-timer').disabled = true;
-                    }
-                }, 1000);
-            }
+        function hideNotif() {
+            document.getElementById('notif-banner').classList.add('hidden');
         }
 
-        function pauseTimer() {
-            clearInterval(timerInterval);
-            isRunning = false;
-            document.getElementById('start-timer').disabled = false;
-            document.getElementById('pause-timer').disabled = true;
+        // Load data on start
+        loadNotes();
+        loadChat();
+        setInterval(loadChat, 3000); // Poll chat
+
+        // Theme
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle.onclick = () => {
+            document.body.classList.toggle('dark-mode');
+            themeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+            localStorage.setTheme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+        };
+        if (localStorage.getTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            themeToggle.textContent = '☀️';
         }
-
-        function resetTimer() {
-            clearInterval(timerInterval);
-            timeLeft = 25 * 60;
-            updateTimerDisplay();
-            isRunning = false;
-            document.getElementById('start-timer').disabled = false;
-            document.getElementById('pause-timer').disabled = true;
-        }
-
-        function updateTimerDisplay() {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            document.getElementById('timer-display').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-
-        const style = document.createElement('style');
-        style.textContent = `
-            .popup-confetti { transition: transform 0.9s ease-out, opacity 0.9s ease-out; }
-            .popup-confetti { transform: translateY(-80px); opacity: 0; }
-        `;
-        document.head.appendChild(style);
-
     </script>
 </body>
 </html>

@@ -24,6 +24,87 @@
             font-family: 'Outfit', sans-serif;
             background-color: #030712;
             color: #e2e8f0;
+            overflow-x: hidden;
+            transition: background-color 0.35s ease, color 0.35s ease;
+            min-height: 100vh;
+        }
+
+        .dark-mode {
+            background-color: #020517;
+            color: #e2e8f0;
+        }
+
+        .dark-mode .bg-grid {
+            background-image: radial-gradient(circle at 12% 16%, rgba(147, 197, 253, 0.18) 0%, transparent 38%),
+                              linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+        }
+
+        .dark-mode nav {
+            background: rgba(4, 11, 34, 0.88);
+            border-color: rgba(56, 189, 248, 0.25);
+        }
+
+        .dark-mode .glass-card,
+        .dark-mode .fc {
+            background: rgba(6, 10, 28, 0.9);
+            border: 1px solid rgba(96, 165, 250, 0.24);
+            box-shadow: 0 14px 35px rgba(11, 22, 56, 0.55);
+        }
+
+        .dark-mode .fc .fc-toolbar {
+            background: linear-gradient(135deg, rgba(13, 28, 57, 0.9), rgba(22, 57, 114, 0.65));
+        }
+
+        .light-mode {
+            background-color: #eff6ff;
+            color: #0f172a;
+        }
+
+        .light-mode .bg-grid {
+            background-image: radial-gradient(circle at 8% 15%, rgba(37, 99, 235, 0.16) 0%, transparent 36%),
+                              linear-gradient(to right, rgba(37, 99, 235, 0.08) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(37, 99, 235, 0.08) 1px, transparent 1px);
+        }
+
+        .light-mode nav {
+            background: rgba(255, 255, 255, 0.85);
+            border-color: rgba(147, 197, 253, 0.4);
+        }
+
+        .light-mode .glass-card,
+        .light-mode .fc {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            box-shadow: 0 12px 27px rgba(37, 99, 235, 0.15);
+        }
+
+        .light-mode .fc .fc-toolbar {
+            background: linear-gradient(135deg, rgba(219, 234, 254, 0.9), rgba(191, 219, 254, 0.7));
+        }
+
+        .light-mode .text-white { color: #0f172a !important; }
+        .light-mode .text-slate-400 { color: #475569 !important; }
+
+        .theme-btn {
+            min-width: 56px;
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            box-shadow: 0 8px 16px rgba(15, 23, 42, 0.35);
+        }
+
+        .theme-btn:hover {
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, 0.26);
+        }
+
+        .fc .fc-toolbar-title {
+            font-size: 1.75rem;
+            background: linear-gradient(90deg, #93c5fd, #38bdf8, #0ea5e9);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 900;
         }
         
         .bg-grid {
@@ -36,44 +117,132 @@
             background: rgba(15, 23, 42, 0.8);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .fc {
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(15, 23, 42, 0.9);
             color: #e2e8f0;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+        .fc .fc-toolbar {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(59, 130, 246, 0.1));
+            border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+            padding: 20px;
         }
         .fc .fc-toolbar-title {
             color: #e2e8f0;
             font-weight: 800;
+            font-size: 1.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
         .fc .fc-button {
-            background: rgba(56, 189, 248, 0.1);
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(59, 130, 246, 0.2));
             border: 1px solid rgba(56, 189, 248, 0.3);
             color: #38bdf8;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+        }
+        .fc .fc-col-header-cell {
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid rgba(56, 189, 248, 0.35);
+        }
+        .fc .fc-col-header-cell-cushion {
+            color: #ebf8ff;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+        }
+        .fc .fc-daygrid-week-number {
+            color: #cbd5e1;
+            background: rgba(30, 41, 59, 0.7);
         }
         .fc .fc-button:hover {
-            background: rgba(56, 189, 248, 0.2);
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.4), rgba(59, 130, 246, 0.4));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
         }
         .fc .fc-button:not(:disabled).fc-button-active {
-            background: #38bdf8;
+            background: linear-gradient(135deg, #38bdf8, #3b82f6);
             color: #030712;
+            box-shadow: 0 4px 16px rgba(56, 189, 248, 0.6);
         }
         .fc .fc-daygrid-day {
             background: rgba(3, 7, 18, 0.5);
+            transition: all 0.3s ease;
         }
         .fc .fc-daygrid-day:hover {
             background: rgba(56, 189, 248, 0.1);
+            transform: scale(1.02);
         }
         .fc .fc-day-today {
-            background: rgba(56, 189, 248, 0.2) !important;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.3), rgba(59, 130, 246, 0.3)) !important;
+            border: 2px solid #38bdf8 !important;
+            box-shadow: inset 0 0 20px rgba(56, 189, 248, 0.3);
         }
         .fc .fc-event {
             background: linear-gradient(135deg, #38bdf8, #3b82f6);
             border: none;
             color: white;
+            border-radius: 8px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
+            transition: all 0.3s ease;
         }
         .fc .fc-event:hover {
             background: linear-gradient(135deg, #06b6d4, #2563eb);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(56, 189, 248, 0.6);
+        }
+        .fc .fc-daygrid-event-dot {
+            display: none;
+        }
+
+        .event-card {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(59, 130, 246, 0.1));
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        .event-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(56, 189, 248, 0.3);
+            border-color: rgba(56, 189, 248, 0.5);
+        }
+
+        .animate-float {
+            animation: none !important;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .animate-pulse-glow {
+            animation: pulse-glow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(56, 189, 248, 0.6);
+            border-radius: 50%;
+            animation: particle-float 8s linear infinite;
+        }
+        @keyframes particle-float {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
         }
 
         ::-webkit-scrollbar { width: 8px; }
@@ -91,7 +260,8 @@
                 </h1>
             </div>
             <div class="flex items-center gap-4">
-                <a href="/" class="text-slate-300 hover:text-white font-semibold transition-all">← Back to Home</a>
+                <a id="calendar-back" href="{{ url_for('dashboard', user_id=user_id) if user_id else url_for('login') }}" class="text-slate-300 hover:text-white font-semibold transition-all">← Back to Dashboard</a>
+                <button id="theme-toggle" class="theme-btn text-slate-800 dark:text-white px-3 py-2 rounded-lg">🌙</button>
                 <span class="text-[10px] font-bold text-cyan-500 uppercase tracking-widest bg-cyan-500/10 px-3 py-1 rounded-full border border-cyan-500/20">Academic Calendar</span>
             </div>
         </nav>
@@ -113,6 +283,13 @@
                     <h3 class="text-lg font-bold text-white mb-4">➕ Add Event</h3>
                     <form id="event-form" class="space-y-4">
                         <input type="text" id="event-title" placeholder="Event Title" class="w-full p-3 rounded-xl bg-[#030712] border border-white/10 text-white outline-none" required>
+                        <select id="event-type" class="w-full p-3 rounded-xl bg-[#030712] border border-white/10 text-white outline-none">
+                            <option value="event" selected>📅 General Event</option>
+                            <option value="exam">📝 Exam</option>
+                            <option value="holiday">🏖️ Holiday</option>
+                            <option value="meeting">👥 Meeting</option>
+                            <option value="sports">⚽ Sports</option>
+                        </select>
                         <textarea id="event-description" placeholder="Description" class="w-full p-3 rounded-xl bg-[#030712] border border-white/10 text-white outline-none" rows="3"></textarea>
                         <input type="datetime-local" id="event-date" class="w-full p-3 rounded-xl bg-[#030712] border border-white/10 text-white outline-none" required>
                         <div class="flex gap-2">
@@ -143,12 +320,13 @@
         const db = firebase.firestore();
 
         let calendar;
-        let isPrincipal = false; // This should be set based on login, for now assume false
+        let isPrincipal = "{{ 'true' if is_principal else 'false' }}" === "true";
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is principal (simplified)
             const urlParams = new URLSearchParams(window.location.search);
-            isPrincipal = urlParams.get('principal') === 'true'; // Pass this from backend
+            if (urlParams.has('principal')) {
+                isPrincipal = urlParams.get('principal') === 'true';
+            }
             
             if (isPrincipal) {
                 document.getElementById('add-event-btn').classList.remove('hidden');
@@ -169,6 +347,7 @@
                 themeSystem: 'standard'
             });
             calendar.render();
+            
             loadUpcomingEvents();
         });
 
@@ -177,12 +356,26 @@
                 const events = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
+                    const eventColors = {
+                        'exam': '#ef4444',      // Red for exams
+                        'holiday': '#10b981',   // Green for holidays
+                        'meeting': '#f59e0b',   // Yellow for meetings
+                        'sports': '#8b5cf6',    // Purple for sports
+                        'event': '#06b6d4'      // Cyan for general events
+                    };
+                    
                     events.push({
                         id: doc.id,
                         title: data.title,
                         start: new Date(data.date),
                         description: data.description,
-                        extendedProps: { description: data.description }
+                        backgroundColor: eventColors[data.type] || '#06b6d4',
+                        borderColor: eventColors[data.type] || '#06b6d4',
+                        textColor: '#ffffff',
+                        extendedProps: { 
+                            description: data.description,
+                            type: data.type || 'event'
+                        }
                     });
                 });
                 successCallback(events);
@@ -190,7 +383,21 @@
         }
 
         function handleEventClick(info) {
-            alert(`${info.event.title}\n\n${info.event.extendedProps.description || 'No description'}`);
+            if (isPrincipal) {
+                // Principal can delete events
+                if (confirm(`Delete "${info.event.title}"?`)) {
+                    db.collection("calendar_events").doc(info.event.id).delete().then(() => {
+                        calendar.refetchEvents();
+                        loadUpcomingEvents();
+                        alert('Event deleted successfully!');
+                    }).catch(error => {
+                        alert('Error deleting event: ' + error.message);
+                    });
+                }
+            } else {
+                // Students can only view
+                alert(`${info.event.title}\n\n${info.event.extendedProps.description || 'No description'}\n\nType: ${info.event.extendedProps.type || 'Event'}`);
+            }
         }
 
         function handleDateClick(info) {
@@ -215,11 +422,13 @@
             const title = document.getElementById('event-title').value;
             const description = document.getElementById('event-description').value;
             const date = document.getElementById('event-date').value;
+            const type = document.getElementById('event-type').value;
             
             db.collection("calendar_events").add({
                 title: title,
                 description: description,
                 date: new Date(date).toISOString(),
+                type: type,
                 createdBy: 'principal'
             }).then(() => {
                 calendar.refetchEvents();
@@ -241,18 +450,58 @@
                 .get().then(snapshot => {
                     const container = document.getElementById('upcoming-events');
                     container.innerHTML = '';
+                    
+                    const typeColors = {
+                        'exam': 'text-red-400 border-red-500/20',
+                        'holiday': 'text-green-400 border-green-500/20',
+                        'meeting': 'text-yellow-400 border-yellow-500/20',
+                        'sports': 'text-purple-400 border-purple-500/20',
+                        'event': 'text-cyan-400 border-cyan-500/20'
+                    };
+                    
                     snapshot.forEach(doc => {
                         const data = doc.data();
                         const eventDate = new Date(data.date);
+                        const eventType = data.type || 'event';
+                        const typeClass = typeColors[eventType] || typeColors.event;
+                        
                         const div = document.createElement('div');
-                        div.className = 'p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20';
+                        div.className = `event-card p-3 rounded-xl border ${typeClass}`;
                         div.innerHTML = `
-                            <p class="text-sm font-bold text-cyan-400">${data.title}</p>
-                            <p class="text-xs text-slate-400">${eventDate.toLocaleDateString()}</p>
+                            <p class="text-sm font-bold">${data.title}</p>
+                            <p class="text-xs opacity-75">${eventDate.toLocaleDateString()} • ${eventType}</p>
                         `;
                         container.appendChild(div);
                     });
                 });
+        }
+
+        // Theme toggle logic aligned with homepage
+        const themeToggle = document.getElementById('theme-toggle');
+        const bodyEl = document.body;
+
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                bodyEl.classList.add('dark-mode');
+                bodyEl.classList.remove('light-mode');
+                themeToggle.textContent = '☀️';
+            } else {
+                bodyEl.classList.remove('dark-mode');
+                bodyEl.classList.add('light-mode');
+                themeToggle.textContent = '🌙';
+            }
+            localStorage.setItem('theme', theme);
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = localStorage.getItem('theme') === 'dark' ? 'dark' : 'light';
+            applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        });
+
+        if (localStorage.getItem('theme') === 'dark') {
+            applyTheme('dark');
+        } else {
+            applyTheme('light');
         }
     </script>
 </body>

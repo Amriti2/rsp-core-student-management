@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: rsp-core
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    autoDeploy: true
+    envVars:
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false

@@ -21,6 +21,7 @@
         body {
             font-family: 'Outfit', sans-serif;
             background-color: #030712; 
+            transition: background-color 0.3s ease;
         }
         
         .bg-grid {
@@ -41,11 +42,47 @@
             100% { transform: translateX(100%); }
         }
         
+        /* Dark mode styles */
+        .dark-mode {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+        .dark-mode .bg-grid {
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        }
+        .dark-mode nav {
+            background-color: rgba(15, 23, 42, 0.8);
+        }
+        .dark-mode .glass-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
         /* Custom Scrollbar for a High-Quality feel */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #030712; }
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; border: 2px solid #030712; }
         ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+        
+        /* Fun animations */
+        .bounce-in {
+            animation: bounceIn 0.8s ease-out;
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .float {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
     </style>
 </head>
 <body class="text-slate-200 min-h-screen flex flex-col relative overflow-y-auto overflow-x-hidden bg-grid">
@@ -64,6 +101,9 @@
     <a href="/login" class="text-slate-300 hover:text-white font-semibold transition-all hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
         Student Login
     </a>
+    <button id="theme-toggle" class="ml-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all">
+        🌙
+    </button>
 </nav>
 
 <section class="flex-1 flex flex-col justify-center items-center text-center px-6 py-24 relative z-10">
@@ -125,5 +165,70 @@
     &copy; 2026 RSP Core • Engineered for Students
 </footer>
 
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const body = document.body;
+        
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            themeToggle.textContent = body.classList.contains('dark-mode') ? '☀️' : '🌙';
+            localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light');
+        });
+        
+        // Load saved theme
+        if (localStorage.getItem('theme') === 'dark') {
+            body.classList.add('dark-mode');
+            themeToggle.textContent = '☀️';
+        }
+        
+        // Add bounce-in animation to main content
+        document.addEventListener('DOMContentLoaded', () => {
+            const mainContent = document.querySelector('section.flex-1');
+            mainContent.classList.add('bounce-in');
+            
+            // Add float animation to feature cards
+            const cards = document.querySelectorAll('.group.bg-\\[\\#0f172a\\]');
+            cards.forEach((card, index) => {
+                card.classList.add('float');
+                card.style.animationDelay = `${index * 0.2}s`;
+            });
+        });
+        
+        // Fun confetti effect on button hover
+        document.querySelectorAll('a.group.relative').forEach(button => {
+            button.addEventListener('mouseenter', () => {
+                createConfetti(button);
+            });
+        });
+        
+        function createConfetti(element) {
+            for (let i = 0; i < 10; i++) {
+                const confetti = document.createElement('div');
+                confetti.textContent = '✨';
+                confetti.style.position = 'absolute';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.top = '0';
+                confetti.style.fontSize = '20px';
+                confetti.style.animation = 'fall 1s ease-out forwards';
+                confetti.style.pointerEvents = 'none';
+                element.appendChild(confetti);
+                
+                setTimeout(() => confetti.remove(), 1000);
+            }
+        }
+        
+        // Add fall animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fall {
+                to {
+                    transform: translateY(100px) rotate(360deg);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
 </body>
 </html>
