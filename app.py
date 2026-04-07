@@ -14,6 +14,18 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "rsp_core_secure_system_key"
 PRINCIPALS = ["admin", "principal_mark", "school_head", "amran2", "principal2"]
 
 
+def load_service_account_from_env(raw_value):
+    normalized = raw_value.strip()
+    if normalized.startswith("'") and normalized.endswith("'"):
+        normalized = normalized[1:-1]
+
+    payload = json.loads(normalized)
+    private_key = payload.get("private_key")
+    if isinstance(private_key, str):
+        payload["private_key"] = private_key.replace("\\n", "\n")
+    return payload
+
+
 def initialize_firestore():
     if getattr(sys, "frozen", False):
         base_dir = sys._MEIPASS
@@ -26,7 +38,7 @@ def initialize_firestore():
     try:
         if not firebase_admin._apps:
             if env_json:
-                cred = credentials.Certificate(json.loads(env_json))
+                cred = credentials.Certificate(load_service_account_from_env(env_json))
             elif env_json_path:
                 cred = credentials.Certificate(env_json_path)
             else:
